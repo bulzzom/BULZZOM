@@ -1,18 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MainActivity">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main_layout"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@drawable/day"
+    android:orientation="vertical">
 
-    <TextView
+    <SlidingDrawer
+        android:id="@+id/slidingDrawer"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_height="150dp"
+        android:layout_marginTop="20dp"
+        android:content="@+id/content"
+        android:gravity="center"
+        android:handle="@+id/handle"
+        android:orientation="vertical"
+        android:rotation="180">
 
-</android.support.constraint.ConstraintLayout>
+        <LinearLayout
+            android:id="@+id/content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:rotation="180">
+
+            <Button
+                android:id="@+id/alarmbtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/scdream4"
+                android:text="알람설정" />
+
+            <Button
+                android:id="@+id/timerbtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/scdream4"
+                android:text="타이머설정" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/handle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/arrow"
+            android:scaleX="0.5"
+            android:scaleY="0.5" />
+    </SlidingDrawer>
+
+    <LinearLayout
+        android:id="@+id/linearLayout3"
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        android:layout_marginTop="150dp"
+        android:layout_weight="0.31"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/statusText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="50dp"
+                android:fontFamily="@font/scdream4"
+                android:text="@string/switch_on"
+                android:textColor="@color/black"
+                android:textSize="20sp" />
+
+            <Switch
+                android:id="@+id/statusSwitch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:switchMinWidth="0dp"
+                android:textOff=""
+                android:textOn=""
+                android:thumb="@drawable/switch_thumb_selector"
+                android:track="@drawable/switch_track_selector" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linearLayout2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_select"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/scdream4"
+            android:padding="12dp"
+            android:text="연결하기" />
+    </LinearLayout>
+</LinearLayout>
