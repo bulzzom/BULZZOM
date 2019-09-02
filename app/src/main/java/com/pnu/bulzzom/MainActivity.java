@@ -35,6 +35,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -45,7 +46,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -79,7 +79,6 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
     private BluetoothAdapter mBtAdapter = null;
     private ArrayAdapter<String> listAdapter;
     private Button btnConnectDisconnect;
-    //private Button btnStatusToggle;
     private LinearLayout layout;
     private Switch switchButton;
     private final BroadcastReceiver UARTStatusChangeReceiver = new BroadcastReceiver() {
@@ -95,8 +94,6 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
                         String currentDateTimeString = DateFormat.getTimeInstance().format(new Date());
                         Log.d(TAG, "UART_CONNECT_MSG");
                         btnConnectDisconnect.setText("연결끊기");
-                        // TODO: slider
-                        switchButton.setEnabled(true);
                         listAdapter.add("[" + currentDateTimeString + "] Connected to: " + mDevice.getName());
                         mState = UART_PROFILE_CONNECTED;
                     }
@@ -110,8 +107,6 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
                         String currentDateTimeString = DateFormat.getTimeInstance().format(new Date());
                         Log.d(TAG, "UART_DISCONNECT_MSG");
                         btnConnectDisconnect.setText("연결하기");
-                        // TODO: slider
-                        switchButton.setEnabled(false);
                         listAdapter.add("[" + currentDateTimeString + "] Disconnected to: " + mDevice.getName());
                         mState = UART_PROFILE_DISCONNECTED;
                         mService.close();
@@ -123,6 +118,8 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
             //*********************//
             if (action.equals(UartService.ACTION_GATT_SERVICES_DISCOVERED)) {
                 mService.enableTXNotification();
+
+                switchButton.setEnabled(true);
             }
             //*********************//
             if (action.equals(UartService.ACTION_DATA_AVAILABLE)) {
@@ -132,8 +129,10 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
                     public void run() {
                         try {
                             String text = new String(txValue, StandardCharsets.UTF_8);
-                            String currentDateTimeString = DateFormat.getTimeInstance().format(new Date());
-                            listAdapter.add("[" + currentDateTimeString + "] RX: " + text);
+                            Log.d(TAG, text);
+                            if (text.contains("OK")) {
+                                switchButton.setEnabled(true);
+                            }
                         } catch (Exception e) {
                             Log.e(TAG, e.toString());
                         }
@@ -145,8 +144,6 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
                 showMessage("Device doesn't support UART. Disconnecting");
                 mService.disconnect();
             }
-
-
         }
     };
     private TextView statusText;
@@ -154,7 +151,6 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
     private Button alarmbtn;
     private Button timerbtn;
     private Button slidingbtn;
-    private Boolean notChecked;
     //UART service connected/disconnected
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder rawBinder) {
@@ -164,12 +160,12 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
                 Log.e(TAG, "Unable to initialize Bluetooth");
                 finish();
             }
-
         }
 
         public void onServiceDisconnected(ComponentName classname) {
             ////     mService.disconnect(mDevice);
             mService = null;
+            switchButton.setEnabled(false);
         }
     };
 
@@ -196,6 +192,7 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBtAdapter == null) {
             Toast.makeText(this, "Bluetooth is not available", Toast.LENGTH_LONG).show();
@@ -204,7 +201,6 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
         }
         listAdapter = new ArrayAdapter<String>(this, R.layout.message_detail);
         btnConnectDisconnect = findViewById(R.id.btn_select);
-        //btnStatusToggle=(Button) findViewById(R.id.statusToggle);
         switchButton = findViewById(R.id.statusSwitch);
         statusText = findViewById(R.id.statusText);
         layout = findViewById(R.id.main_layout);
@@ -212,8 +208,6 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
         alarmbtn = findViewById(R.id.alarmbtn);
         timerbtn = findViewById(R.id.timerbtn);
         slidingbtn = findViewById(R.id.handle);
-
-        notChecked = false;
 
         service_init();
 
@@ -240,58 +234,53 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
                 }
             }
         });
-/*
-        btnStatusToggle.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (switchButton.isChecked()) {
-                    notChecked = true;
-                    switchButton.setChecked(false);
-                    statusText.setText(R.string.switch_on);
-                    statusText.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.black));
-                    layout.setBackground(ContextCompat.getDrawable(MainActivity.this, R.drawable.day));
-                }
-                else {
-                    notChecked = true;
-                    switchButton.setChecked(true);
-                    statusText.setText(R.string.switch_off);
-                    statusText.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.whitegrey));
-                    layout.setBackground(ContextCompat.getDrawable(MainActivity.this, R.drawable.night));
-                }
-            }
-        });
-*/
+
         // Handle Send button
         switchButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                byte[] value = null;
-
-                if (notChecked) {
-                    notChecked = false;
-                    return;
-                }
-
                 if (isChecked) {
                     statusText.setText(R.string.switch_off);
                     statusText.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.whitegrey));
                     layout.setBackground(ContextCompat.getDrawable(MainActivity.this, R.drawable.night));
 
-                    // On
-                    value = "SA50".getBytes(StandardCharsets.UTF_8);
-                    mService.writeRXCharacteristic(value);
+                    // Off
+                    if (switchButton.isEnabled()) {
+                        try {
+                            while (!mService.writeRXCharacteristic("SA50".getBytes(StandardCharsets.UTF_8)))
+                                Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 } else {
                     statusText.setText(R.string.switch_on);
                     statusText.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.black));
                     layout.setBackground(ContextCompat.getDrawable(MainActivity.this, R.drawable.day));
 
-                    // Off
-                    value = "SA160".getBytes(StandardCharsets.UTF_8);
-                    mService.writeRXCharacteristic(value);
+                    // On
+                    if (switchButton.isEnabled()) {
+                        try {
+                            while (!mService.writeRXCharacteristic("SA160".getBytes(StandardCharsets.UTF_8)))
+                                Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
+                switchButton.setEnabled(false);
             }
         });
+
+        SharedPreferences cache = getSharedPreferences("cache", Activity.MODE_PRIVATE);
+        String savedStatus = cache.getString("status", "false");
+
         switchButton.setEnabled(false);
+        if (savedStatus.equals("true")) {
+            switchButton.setChecked(true);
+        } else {
+            switchButton.setChecked(false);
+        }
 
         alarmbtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -321,8 +310,14 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
 
                         try {
                             byte[] value = null;
-                            value = ("TAN" + totalTime.toString()).getBytes(StandardCharsets.UTF_8);
-                            mService.writeRXCharacteristic(value);
+                            if (switchButton.isChecked())
+                                value = ("TAF" + totalTime.toString()).getBytes(StandardCharsets.UTF_8);
+                            else
+                                value = ("TAN" + totalTime.toString()).getBytes(StandardCharsets.UTF_8);
+
+                            while (!mService.writeRXCharacteristic(value))
+                                Thread.sleep(1000);
+                            switchButton.setEnabled(false);
                         } catch (Exception e) {
                             Toast.makeText(MainActivity.this, "시간을 숫자로만 입력해주세요", Toast.LENGTH_LONG).show();
                         }
@@ -332,13 +327,9 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
                 tpd.show();
 
                 Button posBtn = tpd.getButton(tpd.BUTTON_POSITIVE);
+                posBtn.setWidth(400);
                 Button negBtn = tpd.getButton(tpd.BUTTON_NEGATIVE);
-
-                LinearLayout.LayoutParams positiveButtonLL = (LinearLayout.LayoutParams) posBtn.getLayoutParams();
-                positiveButtonLL.gravity = Gravity.CENTER;
-                positiveButtonLL.width = LinearLayout.LayoutParams.MATCH_PARENT;
-                posBtn.setLayoutParams(positiveButtonLL);
-                negBtn.setLayoutParams(positiveButtonLL);
+                negBtn.setWidth(400);
             }
         });
 
@@ -358,13 +349,29 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
                 alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, "설정", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        EditText et_hour = findViewById(R.id.timer_hour);
-                        EditText et_minute = findViewById(R.id.timer_minute);
-                        EditText et_second = findViewById(R.id.timer_second);
+                        EditText et_hour = alertDialog.findViewById(R.id.timer_hour);
+                        EditText et_minute = alertDialog.findViewById(R.id.timer_minute);
+                        EditText et_second = alertDialog.findViewById(R.id.timer_second);
 
-                        String hour = et_hour.getText().toString();
-                        String minute = et_minute.getText().toString();
-                        String second = et_second.getText().toString();
+                        String hour, minute, second;
+                        if (et_hour.getText() != null) {
+                            hour = et_hour.getText().toString();
+                        } else {
+                            hour = "0";
+                        }
+
+                        if (et_minute.getText() != null) {
+                            minute = et_minute.getText().toString();
+                        } else {
+                            minute = "0";
+                        }
+
+                        if (et_second.getText() != null) {
+                            second = et_second.getText().toString();
+                        } else {
+                            second = "0";
+                        }
+
                         try {
                             byte[] value = null;
                             Integer parsedHour = Integer.parseInt(hour);
@@ -373,8 +380,14 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
 
                             Integer totalTime = parsedHour * 3600 + parsedMinute * 60 + parsedSecond;
 
-                            value = ("TAN" + totalTime.toString()).getBytes(StandardCharsets.UTF_8);
-                            mService.writeRXCharacteristic(value);
+                            if (switchButton.isChecked())
+                                value = ("TAF" + totalTime.toString()).getBytes(StandardCharsets.UTF_8);
+                            else
+                                value = ("TAN" + totalTime.toString()).getBytes(StandardCharsets.UTF_8);
+
+                            while (!mService.writeRXCharacteristic(value))
+                                Thread.sleep(1000);
+                            switchButton.setEnabled(false);
                         } catch (Exception e) {
                             Toast.makeText(MainActivity.this, "시간을 숫자로만 입력해주세요", Toast.LENGTH_LONG).show();
                         }
@@ -389,19 +402,23 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
 
                 alertDialog.show();
 
+                Button posBtn = alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
+                posBtn.setWidth(400);
+                Button negBtn = alertDialog.getButton(DialogInterface.BUTTON_NEGATIVE);
+                negBtn.setWidth(400);
             }
         });
 
         slidingdrawer.setOnDrawerOpenListener(new SlidingDrawer.OnDrawerOpenListener() {
             @Override
             public void onDrawerOpened() {
-                slidingbtn.setVisibility(View.INVISIBLE);
+                slidingbtn.setRotation(180);
             }
         });
 
         slidingdrawer.setOnDrawerCloseListener(new SlidingDrawer.OnDrawerCloseListener() {
             public void onDrawerClosed() {
-                slidingbtn.setVisibility(View.VISIBLE);
+                slidingbtn.setRotation(0);
             }
         });
     }
@@ -451,6 +468,16 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
     @Override
     protected void onPause() {
         Log.d(TAG, "onPause");
+        SharedPreferences cache = getSharedPreferences("cache", Activity.MODE_PRIVATE);
+
+        SharedPreferences.Editor editor = cache.edit();
+
+        if (switchButton.isChecked())
+            editor.putString("status", "true");
+        else
+            editor.putString("status", "false");
+
+        editor.commit();
         super.onPause();
     }
 
@@ -493,7 +520,6 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
                 // When the request to enable Bluetooth returns
                 if (resultCode == Activity.RESULT_OK) {
                     Toast.makeText(this, "Bluetooth has turned on ", Toast.LENGTH_SHORT).show();
-
                 } else {
                     // User did not enable Bluetooth or an error occurred
                     Log.d(TAG, "BT not enabled");
@@ -515,7 +541,6 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
 
     private void showMessage(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-
     }
 
     @Override

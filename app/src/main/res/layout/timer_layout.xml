@@ -7,38 +7,41 @@
 
     <EditText
         android:id="@+id/timer_hour"
-        android:layout_width="50sp"
+        android:layout_width="60sp"
         android:layout_height="wrap_content"
+        android:text="0"
         android:fontFamily="@font/scdream4" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/scdream4"
-        android:text="시 " />
+        android:text=" 시 " />
 
     <EditText
         android:id="@+id/timer_minute"
-        android:layout_width="50sp"
+        android:layout_width="60sp"
         android:layout_height="wrap_content"
+        android:text="0"
         android:fontFamily="@font/scdream4" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/scdream4"
-        android:text="분 " />
+        android:text=" 분 " />
 
     <EditText
         android:id="@+id/timer_second"
-        android:layout_width="50sp"
+        android:layout_width="60sp"
         android:layout_height="wrap_content"
+        android:text="0"
         android:fontFamily="@font/scdream4" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/scdream4"
-        android:text="초 " />
+        android:text=" 초 " />
 
 </LinearLayout>

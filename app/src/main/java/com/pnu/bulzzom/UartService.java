@@ -309,7 +309,7 @@ public class UartService extends Service {
      * Enables or disables notification on a give characteristic.
      */
 
-    public void writeRXCharacteristic(byte[] value) {
+    public boolean writeRXCharacteristic(byte[] value) {
 
 
         BluetoothGattService RxService = mBluetoothGatt.getService(RX_SERVICE_UUID);
@@ -317,18 +317,20 @@ public class UartService extends Service {
         if (RxService == null) {
             showMessage("Rx service not found!");
             broadcastUpdate(DEVICE_DOES_NOT_SUPPORT_UART);
-            return;
+            return false;
         }
         BluetoothGattCharacteristic RxChar = RxService.getCharacteristic(RX_CHAR_UUID);
         if (RxChar == null) {
             showMessage("Rx charateristic not found!");
             broadcastUpdate(DEVICE_DOES_NOT_SUPPORT_UART);
-            return;
+            return false;
         }
         RxChar.setValue(value);
         boolean status = mBluetoothGatt.writeCharacteristic(RxChar);
 
         Log.d(TAG, "write TXchar - status=" + status);
+
+        return status;
     }
 
     private void showMessage(String msg) {
