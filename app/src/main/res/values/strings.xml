@@ -20,7 +20,7 @@
       ~ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       -->
 <resources>
-    <string name="app_name">bulzzom</string>
+    <string name="app_name">BULZZOM</string>
     <string name="switch_on">꺼 줘</string>
     <string name="switch_off">켜 줘</string>
     <string name="device">Device:</string>

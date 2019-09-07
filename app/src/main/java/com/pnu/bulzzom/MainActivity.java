@@ -151,6 +151,7 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
     private Button alarmbtn;
     private Button timerbtn;
     private Button slidingbtn;
+    private boolean fromTimer;
     //UART service connected/disconnected
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder rawBinder) {
@@ -208,6 +209,7 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
         alarmbtn = findViewById(R.id.alarmbtn);
         timerbtn = findViewById(R.id.timerbtn);
         slidingbtn = findViewById(R.id.handle);
+        fromTimer = false;
 
         service_init();
 
@@ -243,31 +245,38 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
                     statusText.setText(R.string.switch_off);
                     statusText.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.whitegrey));
                     layout.setBackground(ContextCompat.getDrawable(MainActivity.this, R.drawable.night));
-
-                    // Off
-                    if (switchButton.isEnabled()) {
-                        try {
-                            while (!mService.writeRXCharacteristic("SA50".getBytes(StandardCharsets.UTF_8)))
-                                Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
                 } else {
                     statusText.setText(R.string.switch_on);
                     statusText.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.black));
                     layout.setBackground(ContextCompat.getDrawable(MainActivity.this, R.drawable.day));
+                }
 
-                    // On
-                    if (switchButton.isEnabled()) {
-                        try {
-                            while (!mService.writeRXCharacteristic("SA160".getBytes(StandardCharsets.UTF_8)))
-                                Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
+                if (!fromTimer) {
+                    if (isChecked) {
+                        // Off
+                        if (switchButton.isEnabled()) {
+                            try {
+                                while (!mService.writeRXCharacteristic("SA20".getBytes(StandardCharsets.UTF_8)))
+                                    Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    } else {
+                        // On
+                        if (switchButton.isEnabled()) {
+                            try {
+                                while (!mService.writeRXCharacteristic("SA160".getBytes(StandardCharsets.UTF_8)))
+                                    Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
+                } else {
+                    fromTimer = false;
                 }
+
                 switchButton.setEnabled(false);
             }
         });
@@ -310,10 +319,14 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
 
                         try {
                             byte[] value = null;
-                            if (switchButton.isChecked())
-                                value = ("TAF" + totalTime.toString()).getBytes(StandardCharsets.UTF_8);
-                            else
+
+                            if (switchButton.isChecked()) {
                                 value = ("TAN" + totalTime.toString()).getBytes(StandardCharsets.UTF_8);
+                                switchButton.setChecked(false);
+                            } else {
+                                value = ("TAF" + totalTime.toString()).getBytes(StandardCharsets.UTF_8);
+                                switchButton.setChecked(true);
+                            }
 
                             while (!mService.writeRXCharacteristic(value))
                                 Thread.sleep(1000);
@@ -380,10 +393,15 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
 
                             Integer totalTime = parsedHour * 3600 + parsedMinute * 60 + parsedSecond;
 
-                            if (switchButton.isChecked())
-                                value = ("TAF" + totalTime.toString()).getBytes(StandardCharsets.UTF_8);
-                            else
+                            if (switchButton.isChecked()) {
                                 value = ("TAN" + totalTime.toString()).getBytes(StandardCharsets.UTF_8);
+                                fromTimer = true;
+                                switchButton.setChecked(false);
+                            } else {
+                                value = ("TAF" + totalTime.toString()).getBytes(StandardCharsets.UTF_8);
+                                fromTimer = true;
+                                switchButton.setChecked(true);
+                            }
 
                             while (!mService.writeRXCharacteristic(value))
                                 Thread.sleep(1000);
@@ -395,9 +413,7 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
                 });
                 alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "취소", new DialogInterface.OnClickListener() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                    }
+                    public void onClick(DialogInterface dialog, int which) {}
                 });
 
                 alertDialog.show();
